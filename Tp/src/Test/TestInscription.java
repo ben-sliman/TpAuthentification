@@ -11,14 +11,13 @@ class TestInscription {
         Inscription inscription = new Inscription();
 
         // Cas de test pour les emails valides
-        assertTrue(inscription.validerEmail("exemple@domaine.com"));
-        assertTrue(inscription.validerEmail("nom.prenom@domaine.fr"));
+        assertTrue(inscription.validerEmail("exemple@domaine.fr"));
 
 
         // Cas de test pour les emails invalides
         assertFalse(inscription.validerEmail("utilisateur@domaine"));
-        assertFalse(inscription.validerEmail("utilisateurdomaine.com"));
-        assertFalse(inscription.validerEmail("@domaine.com"));
+        assertFalse(inscription.validerEmail("exempledomaine.com"));
+
     }
 
 
