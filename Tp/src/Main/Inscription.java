@@ -3,29 +3,23 @@ package Main;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * Classe représentant une fenêtre pour l'inscription d'utilisateurs.
  * Cette classe permet de valider un identifiant (email), de hacher un mot de passe
- * et de stocker les informations dans un fichier texte.
+ * et d'insérer ces informations dans une base de données.
  */
 public class Inscription extends JFrame {
 
-    private static final long serialVersionUID = 1L; // ID de sérialisation pour JFrame
+    private static final long serialVersionUID = 1L;
     private JTextField champTexteLogin; // Champ de texte pour l'adresse email
     private JPasswordField champMotDePasse; // Champ pour le mot de passe
 
-    /**
-     * Constructeur pour initialiser la fenêtre d'inscription.
-     */
     public Inscription() {
         setTitle("Inscription");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -43,7 +37,6 @@ public class Inscription extends JFrame {
         champTexteLogin = new JTextField();
         champTexteLogin.setBounds(180, 50, 200, 25);
         panneauContenu.add(champTexteLogin);
-        champTexteLogin.setColumns(10);
 
         // Ajouter une étiquette pour le mot de passe
         JLabel lblMotDePasse = new JLabel("Mot de passe :");
@@ -57,99 +50,48 @@ public class Inscription extends JFrame {
 
         // Bouton d'inscription
         JButton btnEnregistrer = new JButton("S'inscrire");
+        btnEnregistrer.setBounds(230, 150, 100, 25);
         btnEnregistrer.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 try {
                     String email = champTexteLogin.getText();
                     String motDePasse = new String(champMotDePasse.getPassword());
 
-                    // Vérification si les champs ne sont pas vides
-                    if (email.isEmpty() || motDePasse.isEmpty()) {
-                        throw new CustomException("Veuillez remplir tous les champs.");
-                    }
-
-                    // Vérification de la validité de l'email
-                    if (!validerEmail(email)) {
-                        throw new CustomException("Veuillez entrer une adresse email valide (exemple@domaine.com).");
-                    }
-
-                    // Vérification si l'email est déjà utilisé
-                    if (emailExistant(email)) {
-                        throw new CustomException("Cet identifiant (email) est déjà utilisé.");
-                    }
-
-                    // Vérification de la longueur et des critères du mot de passe
-                    if (motDePasse.length() < 12) {
-                        throw new CustomException("Le mot de passe doit contenir au moins 12 caractères.");
-                    }
-
-                    // Hachage et enregistrement des informations
+                    // Validation et enregistrement
+                    verifierChamps(email, motDePasse);
                     String motDePasseHache = hacherMotDePasse(motDePasse);
-                    enregistrerUtilisateur(email, motDePasseHache);
+                    createUser(email, motDePasseHache);
 
-                    // Message de succès et fermeture de la fenêtre
                     JOptionPane.showMessageDialog(null, "Inscription réussie !", "Succès", JOptionPane.INFORMATION_MESSAGE);
-                    dispose();
-
-                } catch (CustomException ex) {
-                    JOptionPane.showMessageDialog(null, ex.getMessage(), "Erreur de validation", JOptionPane.ERROR_MESSAGE);
+                } catch (SQLException ex) {
+                    JOptionPane.showMessageDialog(null, "Erreur SQL : " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+                    ex.printStackTrace();
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(null, "Une erreur inattendue s'est produite lors de l'inscription.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(null, "Erreur inattendue : " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
                     ex.printStackTrace();
                 }
             }
         });
-
-        btnEnregistrer.setBounds(230, 150, 100, 25);
         panneauContenu.add(btnEnregistrer);
     }
 
     /**
-     * Vérifie si un email existe déjà dans le fichier "users.txt".
-     *
-     * @param email L'adresse email à vérifier.
-     * @return true si l'email existe, false sinon.
-     * @throws CustomException si une erreur de lecture se produit.
+     * Insère un nouvel utilisateur dans la table "users".
      */
-    private boolean emailExistant(String email) throws CustomException {
-        try (BufferedReader reader = new BufferedReader(new FileReader("users.txt"))) {
-            String ligne;
-            while ((ligne = reader.readLine()) != null) {
-                String[] identifiants = ligne.split(", ");
-                String emailFichier = identifiants[0].split(": ")[1];
-                if (email.equals(emailFichier)) {
-                    return true;
-                }
-            }
-        } catch (IOException e) {
-            throw new CustomException("Erreur lors de la vérification de l'email existant.", e);
-        }
-        return false;
-    }
-
-    /**
-     * Enregistre un nouvel utilisateur dans le fichier "users.txt".
-     *
-     * @param email        L'adresse email de l'utilisateur.
-     * @param motDePasse   Le mot de passe haché de l'utilisateur.
-     * @throws CustomException si une erreur d'écriture se produit.
-     */
-    private void enregistrerUtilisateur(String email, String motDePasse) throws CustomException {
-        try (FileWriter writer = new FileWriter("users.txt", true)) {
-            writer.write("Login: " + email + ", Mot de passe: " + motDePasse + "\n");
-        } catch (IOException e) {
-            throw new CustomException("Erreur lors de l'enregistrement des informations.", e);
+    private void createUser(String email, String motDePasseHache) throws SQLException {
+        String sql = "INSERT INTO users (email, password) VALUES (?, ?)";
+        try (Connection conn = DataBaseConnexion.connect();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, email);
+            pstmt.setString(2, motDePasseHache);
+            pstmt.executeUpdate();
         }
     }
 
     /**
-     * Hache un mot de passe à l'aide de l'algorithme SHA-256.
-     *
-     * @param motDePasse Le mot de passe en clair.
-     * @return Le mot de passe haché sous forme de chaîne hexadécimale.
-     * @throws NoSuchAlgorithmException si l'algorithme SHA-256 n'est pas disponible.
+     * Hache un mot de passe avec l'algorithme SHA-256.
      */
-    private String hacherMotDePasse(String motDePasse) throws NoSuchAlgorithmException {
+    public String hacherMotDePasse(String motDePasse) throws NoSuchAlgorithmException {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         byte[] hash = digest.digest(motDePasse.getBytes());
         StringBuilder hexString = new StringBuilder();
@@ -162,10 +104,36 @@ public class Inscription extends JFrame {
     }
 
     /**
-     * Valide le format d'une adresse email.
-     *
-     * @param email L'adresse email à valider.
-     * @return true si le format est valide, false sinon.
+     * Vérifie si les champs email et mot de passe sont valides.
+     */
+    private void verifierChamps(String email, String motDePasse) throws SQLException {
+        if (email.isEmpty() || motDePasse.isEmpty()) {
+            throw new IllegalArgumentException("Veuillez remplir tous les champs.");
+        }
+        if (!validerEmail(email)) {
+            throw new IllegalArgumentException("Adresse email non valide.");
+        }
+        if (emailExistant(email)) {
+            throw new IllegalArgumentException("Cet email est déjà utilisé.");
+        }
+    }
+
+    /**
+     * Vérifie si un email existe déjà dans la base de données.
+     */
+    private boolean emailExistant(String email) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM users WHERE email = ?";
+        try (Connection conn = DataBaseConnexion.connect();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, email);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
+        }
+    }
+
+    /**
+     * Valide le format d'une adresse email avec une regex.
      */
     public boolean validerEmail(String email) {
         String regex = "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$";

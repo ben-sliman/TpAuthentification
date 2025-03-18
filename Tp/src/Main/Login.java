@@ -11,202 +11,279 @@ import javax.swing.JPasswordField;
 import javax.swing.JOptionPane;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Classe Login représentant l'interface de connexion.
- * Extends JFrame pour créer une interface graphique de connexion.
+ * Classe Login représentant l'interface graphique de connexion. Cette classe
+ * permet aux utilisateurs de se connecter ou de réinitialiser leur mot de
+ * passe.
  */
 public class Login extends JFrame {
 
-    private static final long serialVersionUID = 1L; // Identifiant de version pour la sérialisation
-    private JPanel panneauContenu; // Panneau de contenu de la fenêtre
-    private JTextField champTexteLogin; // Champ de texte pour le login
-    private JPasswordField champMotDePasse; // Champ de mot de passe
+	private static final long serialVersionUID = 1L;
+	private JPanel panneauContenu; // Panneau principal contenant les composants de la fenêtre
+	private JTextField champTexteLogin; // Champ pour saisir l'adresse email
+	private JPasswordField champMotDePasse; // Champ pour saisir le mot de passe
 
-    /**
-     * Point d'entrée de l'application.
-     * 
-     * @param args arguments de la ligne de commande.
-     */
-    public static void main(String[] args) {
-        EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                try {
-                    Login cadre = new Login();
-                    cadre.setVisible(true);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-    }
+	/**
+	 * Point d'entrée de l'application. Initialise la fenêtre de connexion.
+	 *
+	 * @param args Arguments de la ligne de commande (non utilisés).
+	 */
+	public static void main(String[] args) {
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					Login cadre = new Login(); // Créer et afficher la fenêtre de connexion
+					cadre.setVisible(true);
+				} catch (Exception e) {
+					e.printStackTrace(); // Afficher les erreurs pour le débogage
+				}
+			}
+		});
+	}
 
-    /**
-     * Constructeur de la classe Login.
-     * Initialise la fenêtre avec les composants nécessaires.
-     */
-    public Login() {
-        // Définir le comportement de fermeture de la fenêtre
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	/**
+	 * Constructeur de la classe Login. Configure les composants de l'interface
+	 * utilisateur.
+	 */
+	public Login() {
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Définit l'action de fermeture
+		setBounds(100, 100, 450, 300); // Définit la taille et la position initiales de la fenêtre
+		setTitle("Connexion");
 
-        // Définir la taille et la position de la fenêtre
-        setBounds(100, 100, 450, 300);
+		// Initialisation du panneau de contenu
+		panneauContenu = new JPanel();
+		panneauContenu.setBorder(new EmptyBorder(5, 5, 5, 5));
+		setContentPane(panneauContenu);
+		panneauContenu.setLayout(null);
 
-        // Définir le titre de la fenêtre
-        setTitle("Connexion");
+		// Label et champ pour l'identifiant (email)
+		JLabel lblLogin = new JLabel("Identifiant (email) :");
+		lblLogin.setBounds(50, 50, 120, 25);
+		panneauContenu.add(lblLogin);
 
-        // Créer le panneau de contenu et définir ses bordures
-        panneauContenu = new JPanel();
-        panneauContenu.setBorder(new EmptyBorder(5, 5, 5, 5));
-        setContentPane(panneauContenu);
-        panneauContenu.setLayout(null);
+		champTexteLogin = new JTextField();
+		champTexteLogin.setBounds(180, 50, 200, 25);
+		panneauContenu.add(champTexteLogin);
+		champTexteLogin.setColumns(10);
 
-        // Créer et ajouter le label pour le login
-        JLabel lblLogin = new JLabel("Identifiant (email) :");
-        lblLogin.setBounds(50, 50, 120, 25);
-        panneauContenu.add(lblLogin);
+		// Label et champ pour le mot de passe
+		JLabel lblMotDePasse = new JLabel("Mot de passe :");
+		lblMotDePasse.setBounds(50, 100, 100, 25);
+		panneauContenu.add(lblMotDePasse);
 
-        // Créer et ajouter le champ de texte pour le login
-        champTexteLogin = new JTextField();
-        champTexteLogin.setBounds(180, 50, 200, 25);
-        panneauContenu.add(champTexteLogin);
-        champTexteLogin.setColumns(10);
+		champMotDePasse = new JPasswordField();
+		champMotDePasse.setBounds(180, 100, 200, 25);
+		panneauContenu.add(champMotDePasse);
 
-        // Créer et ajouter le label pour le mot de passe
-        JLabel lblMotDePasse = new JLabel("Mot de passe :");
-        lblMotDePasse.setBounds(50, 100, 100, 25);
-        panneauContenu.add(lblMotDePasse);
+		// Bouton de connexion
+		JButton btnConnexion = new JButton("Connexion");
+		btnConnexion.setBounds(210, 150, 100, 25);
+		panneauContenu.add(btnConnexion);
 
-        // Créer et ajouter le champ de mot de passe
-        champMotDePasse = new JPasswordField();
-        champMotDePasse.setBounds(180, 100, 200, 25);
-        panneauContenu.add(champMotDePasse);
+		btnConnexion.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				try {
+					// Récupérer les valeurs saisies
+					String login = champTexteLogin.getText().trim();
+					String motDePasse = new String(champMotDePasse.getPassword()).trim();
 
-        // Créer et ajouter le bouton de connexion
-        JButton btnConnexion = new JButton("Connexion");
-        btnConnexion.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    // Action à effectuer lors du clic sur le bouton
-                    String login = champTexteLogin.getText().trim();
-                    String motDePasse = new String(champMotDePasse.getPassword()).trim();
+					// Valider les champs
+					if (login.isEmpty() || motDePasse.isEmpty()) {
+						throw new IllegalArgumentException("Tous les champs doivent être remplis.");
+					}
+					if (!validerEmail(login)) {
+						throw new IllegalArgumentException("Adresse email invalide.");
+					}
 
-                    // Vérification si les champs sont vides
-                    if (login.isEmpty()) {
-                        throw new CustomException("Le champ de l'identifiant ne peut pas être vide.");
-                    }
-                    if (motDePasse.isEmpty()) {
-                        throw new CustomException("Le champ du mot de passe ne peut pas être vide.");
-                    }
+					// Hachage du mot de passe
+					String motDePasseHache = hacherMotDePasse(motDePasse);
 
-                    // Vérifier si le format de l'email est correct
-                    if (!validerEmail(login)) {
-                        throw new CustomException("Veuillez entrer une adresse email valide (exemple@domaine.com).");
-                    }
+					// Vérification des identifiants via la base de données
+					if (validerLogin(login, motDePasseHache)) {
+						JOptionPane.showMessageDialog(null, "Connexion réussie !", "Succès",
+								JOptionPane.INFORMATION_MESSAGE);
+					} else {
+						JOptionPane.showMessageDialog(null, "Identifiant ou mot de passe incorrect.", "Erreur",
+								JOptionPane.ERROR_MESSAGE);
+					}
+				} catch (Exception ex) {
+					JOptionPane.showMessageDialog(null, ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+					ex.printStackTrace();
+				}
+			}
+		});
 
-                    // Validation des informations de connexion à partir du fichier users.txt
-                    String motDePasseHache = hacherMotDePasse(motDePasse);
-                    if (validerLogin(login, motDePasseHache)) {
-                        JOptionPane.showMessageDialog(null, "Accès autorisé !", "Authentification", JOptionPane.INFORMATION_MESSAGE);
-                    } else {
-                        throw new CustomException("Identifiant ou mot de passe incorrect.");
-                    }
-                } catch (CustomException ex) {
-                    // Affiche un message d'erreur avec le message approprié
-                    JOptionPane.showMessageDialog(null, ex.getMessage(), "Erreur de saisie", JOptionPane.ERROR_MESSAGE);
-                } catch (Exception ex) {
-                    // Affiche un message d'erreur générique en cas de problème inattendu
-                    JOptionPane.showMessageDialog(null, "Une erreur inattendue s'est produite. Veuillez réessayer.", "Erreur", JOptionPane.ERROR_MESSAGE);
-                    ex.printStackTrace();
-                }
-            }
-        });
-        btnConnexion.setBounds(210, 150, 100, 25);
-        panneauContenu.add(btnConnexion);
+		// Bouton "Mot de Passe Oublié"
+		JButton btnMotDePasseOublie = new JButton("Mot de Passe Oublié");
+		btnMotDePasseOublie.setBounds(172, 176, 187, 25);
+		panneauContenu.add(btnMotDePasseOublie);
 
-        // Ajout du bouton d'inscription
-        JButton btnInscription = new JButton("S'inscrire");
-        btnInscription.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                // Ouvrir la fenêtre d'inscription
-                Inscription inscriptionFrame = new Inscription();
-                inscriptionFrame.setVisible(true);
-            }
-        });
-        btnInscription.setBounds(210, 190, 100, 25); // Positionner le bouton en dessous du bouton de connexion
-        panneauContenu.add(btnInscription);
-    }
+		btnMotDePasseOublie.addActionListener(new ActionListener() {
+		    public void actionPerformed(ActionEvent e) {
+		        try {
+		            // Saisie de l'email de l'utilisateur
+		            String email = JOptionPane.showInputDialog(null, "Entrez votre adresse email :",
+		                    "Mot de Passe Oublié", JOptionPane.QUESTION_MESSAGE);
 
-    /**
-     * Valide le login et le mot de passe haché à partir du fichier users.txt.
-     * 
-     * @param login     Le login entré par l'utilisateur.
-     * @param motDePasseHache Le mot de passe haché entré par l'utilisateur.
-     * @return true si les informations sont correctes, false sinon.
-     * @throws CustomException si une erreur se produit lors de la validation.
-     */
-    private boolean validerLogin(String login, String motDePasseHache) throws CustomException {
-        try (BufferedReader reader = new BufferedReader(new FileReader("users.txt"))) {
-            String ligne;
+		            if (email == null || email.trim().isEmpty()) {
+		                throw new IllegalArgumentException("Veuillez entrer une adresse email.");
+		            }
+		            if (!validerEmail(email)) {
+		                throw new IllegalArgumentException("Adresse email invalide.");
+		            }
+		            if (!emailExistant(email)) {
+		                throw new IllegalArgumentException("Cette adresse email n'existe pas.");
+		            }
 
-            // Parcourt chaque ligne du fichier
-            while ((ligne = reader.readLine()) != null) {
-                // Divise la ligne en utilisant ", " comme séparateur
-                String[] identifiants = ligne.split(", ");
+		            // Création d'un champ JPasswordField pour la saisie sécurisée du mot de passe
+		            JPasswordField champNouveauMotDePasse = new JPasswordField();
+		            int option = JOptionPane.showConfirmDialog(
+		                    null,
+		                    champNouveauMotDePasse,
+		                    "Entrez un nouveau mot de passe",
+		                    JOptionPane.OK_CANCEL_OPTION,
+		                    JOptionPane.PLAIN_MESSAGE
+		            );
 
-                // Récupère le login et le mot de passe haché du fichier
-                String loginFichier = identifiants[0].split(": ")[1];
-                String motDePasseFichier = identifiants[1].split(": ")[1];
+		            if (option == JOptionPane.OK_OPTION) {
+		                // Récupération du mot de passe masqué
+		                String nouveauMotDePasse = new String(champNouveauMotDePasse.getPassword()).trim();
+		                if (nouveauMotDePasse.isEmpty()) {
+		                    throw new IllegalArgumentException("Le mot de passe ne peut pas être vide.");
+		                }
 
-                // Compare les identifiants de l'utilisateur avec ceux du fichier
-                if (login.equals(loginFichier) && motDePasseHache.equals(motDePasseFichier)) {
-                    return true; // Si les identifiants correspondent, retourne true
-                }
-            }
-        } catch (IOException e) {
-            // Lever une CustomException en cas d'erreur de lecture du fichier
-            throw new CustomException("Erreur lors de la lecture du fichier users.txt.", e);
-        }
+		                // Hacher le mot de passe et le mettre à jour dans la base de données
+		                String motDePasseHache = hacherMotDePasse(nouveauMotDePasse);
+		                mettreAJourMotDePasse(email, motDePasseHache);
+		                JOptionPane.showMessageDialog(null, "Votre mot de passe a été mis à jour.", "Succès",
+		                        JOptionPane.INFORMATION_MESSAGE);
+		            } else {
+		                JOptionPane.showMessageDialog(null, "Opération annulée.", "Annulation",
+		                        JOptionPane.INFORMATION_MESSAGE);
+		            }
 
-        return false; // Retourne false si les identifiants ne correspondent pas ou si une erreur se produit
-    }
+		        } catch (IllegalArgumentException ex) {
+		            JOptionPane.showMessageDialog(null, ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+		        } catch (Exception ex) {
+		            JOptionPane.showMessageDialog(null, "Erreur : " + ex.getMessage(), "Erreur",
+		                    JOptionPane.ERROR_MESSAGE);
+		            ex.printStackTrace();
+		        }
+		    }
+		});
 
-    /**
-     * Valide le format de l'adresse email.
-     * 
-     * @param email L'adresse email à valider.
-     * @return true si l'email est valide, false sinon.
-     */
-    public boolean validerEmail(String email) {
-        // Définir l'expression régulière pour un email valide
-        String regex = "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$";
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(email);
-        return matcher.matches();
-    }
 
-    /**
-     * Hache un mot de passe en utilisant SHA-256.
-     * @param motDePasse Le mot de passe à hacher.
-     * @return Le mot de passe haché en hexadécimal.
-     * @throws NoSuchAlgorithmException si l'algorithme SHA-256 n'est pas disponible.
-     */
-    private String hacherMotDePasse(String motDePasse) throws NoSuchAlgorithmException {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        byte[] hash = digest.digest(motDePasse.getBytes());
-        StringBuilder hexString = new StringBuilder();
-        for (byte b : hash) {
-            String hex = Integer.toHexString(0xff & b);
-            if (hex.length() == 1) hexString.append('0');
-            hexString.append(hex);
-        }
-        return hexString.toString();
-    }
+		// Bouton pour ouvrir la page d'inscription
+		JButton btnInscription = new JButton("S'inscrire");
+		btnInscription.setBounds(191, 213, 150, 25);
+		panneauContenu.add(btnInscription);
+
+		btnInscription.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				try {
+					// Ouvrir une nouvelle fenêtre pour l'inscription
+					Inscription inscriptionFrame = new Inscription();
+					inscriptionFrame.setVisible(true); // Afficher la fenêtre
+				} catch (Exception ex) {
+					JOptionPane.showMessageDialog(null, "Erreur : " + ex.getMessage(), "Erreur",
+							JOptionPane.ERROR_MESSAGE);
+				}
+			}
+		});
+	}
+
+	/**
+	 * Valide un login et un mot de passe dans la base de données.
+	 *
+	 * @param login           L'adresse email de l'utilisateur.
+	 * @param motDePasseHache Le mot de passe haché.
+	 * @return true si les identifiants sont corrects, false sinon.
+	 * @throws SQLException En cas d'erreur SQL.
+	 */
+	private boolean validerLogin(String login, String motDePasseHache) throws SQLException {
+		String sql = "SELECT COUNT(*) FROM users WHERE email = ? AND password = ?";
+		try (Connection conn = DataBaseConnexion.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+			pstmt.setString(1, login);
+			pstmt.setString(2, motDePasseHache);
+			ResultSet rs = pstmt.executeQuery();
+			return rs.next() && rs.getInt(1) > 0;
+		}
+	}
+
+	/**
+	 * Vérifie si une adresse email existe dans la base de données.
+	 *
+	 * @param email L'adresse email à vérifier.
+	 * @return true si l'email existe, false sinon.
+	 * @throws SQLException En cas d'erreur SQL.
+	 */
+	private boolean emailExistant(String email) throws SQLException {
+		String sql = "SELECT COUNT(*) FROM users WHERE email = ?";
+		try (Connection conn = DataBaseConnexion.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+			pstmt.setString(1, email);
+			ResultSet rs = pstmt.executeQuery();
+			return rs.next() && rs.getInt(1) > 0;
+		}
+	}
+
+	/**
+	 * Met à jour le mot de passe d'un utilisateur.
+	 *
+	 * @param email                  L'adresse email de l'utilisateur.
+	 * @param nouveauMotDePasseHache Le nouveau mot de passe haché.
+	 * @throws SQLException En cas d'erreur SQL.
+	 */
+	private void mettreAJourMotDePasse(String email, String nouveauMotDePasseHache) throws SQLException {
+		String sql = "UPDATE users SET password = ? WHERE email = ?";
+		try (Connection conn = DataBaseConnexion.connect(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+			pstmt.setString(1, nouveauMotDePasseHache);
+			pstmt.setString(2, email);
+			pstmt.executeUpdate();
+		}
+	}
+
+	/**
+	 * Valide le format d'une adresse email à l'aide d'une expression régulière.
+	 *
+	 * @param email L'adresse email à valider.
+	 * @return true si le format est valide, sinon false.
+	 */
+	public boolean validerEmail(String email) {
+		String regex = "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$"; // Définition d'un format d'email valide
+		Pattern pattern = Pattern.compile(regex);
+		Matcher matcher = pattern.matcher(email);
+		return matcher.matches(); // Retourne true si le format correspond
+	}
+
+	/**
+	 * Hache un mot de passe en utilisant l'algorithme SHA-256.
+	 *
+	 * @param motDePasse Le mot de passe à hacher.
+	 * @return Le mot de passe haché sous forme de chaîne hexadécimale.
+	 * @throws NoSuchAlgorithmException si l'algorithme SHA-256 n'est pas
+	 *                                  disponible.
+	 */
+	public String hacherMotDePasse(String motDePasse) throws NoSuchAlgorithmException {
+		MessageDigest digest = MessageDigest.getInstance("SHA-256"); // Initialisation de l'algorithme de hachage
+		byte[] hash = digest.digest(motDePasse.getBytes()); // Transformation du mot de passe en tableau d'octets
+		StringBuilder hexString = new StringBuilder(); // Stockage du résultat hexadécimal
+
+		for (byte b : hash) {
+			String hex = Integer.toHexString(0xff & b); // Conversion des octets en hexadécimal
+			if (hex.length() == 1) {
+				hexString.append('0'); // Ajout d'un zéro pour garder un format cohérent
+			}
+			hexString.append(hex);
+		}
+		return hexString.toString(); // Renvoi du mot de passe haché
+	}
 }
