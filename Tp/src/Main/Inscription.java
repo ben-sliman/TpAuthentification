@@ -28,7 +28,7 @@ public class Inscription extends JFrame {
         setContentPane(panneauContenu);
         panneauContenu.setLayout(null);
 
-        // Ajouter une étiquette pour l'adresse email
+        // Ajouter une étiquette pour l'adresse emaile
         JLabel lblLogin = new JLabel("Identifiant (email) :");
         lblLogin.setBounds(50, 50, 120, 25);
         panneauContenu.add(lblLogin);
