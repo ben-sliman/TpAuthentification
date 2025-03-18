@@ -1,8 +1,0 @@
-Login: test@test.fr, Mot de passe: test1
-Login: ben@ben.fr, Mot de passe: ben
-Login: ben1@ben.fr, Mot de passe: ben
-Login: test@test.fr, Mot de passe: 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
-Login: bbb@bbb.fr, Mot de passe: a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3
-Login: yoy@yoyo.fr, Mot de passe: da30e45705f79aa7555b538e098d0ab284fbc6c890f92ed8ad1722b63aa69201
-Login: ben10@ben.fr, Mot de passe: 8445e051b29043b365e0b7907a9b02d14ba5c0e7494c9daf8ce819b955fe90f0
-Login: ben123@ben.fr, Mot de passe: a154bbb9b7a5cdee13129a78a90632cb0c2a08e6770c0342cb012ca18edda5b0
