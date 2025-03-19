@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
  * données SQLite. Cette classe permet d'effectuer des actions CRUD tout en
  * respectant les critères de mot de passe et le hachage SHA-256.
  */
-public class adminUtilisateur extends JFrame {
+public class AdminUtilisateur extends JFrame {
 
 	private JPanel contentPane;
 	private JTextField emailField;
@@ -26,7 +26,7 @@ public class adminUtilisateur extends JFrame {
 	 * Constructeur de l'interface utilisateur. Configure les composants de
 	 * l'interface et les actions CRUD.
 	 */
-	public adminUtilisateur() {
+	public AdminUtilisateur() {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 800, 500);
 		setTitle("Gestion des Utilisateurs (Admin)");

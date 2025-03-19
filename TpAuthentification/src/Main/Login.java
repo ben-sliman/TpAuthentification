@@ -113,7 +113,7 @@ public class Login extends JFrame {
 								JOptionPane.INFORMATION_MESSAGE);
 						
 						// Ouvrir la fenêtre adminUtilisateur
-                        adminUtilisateur adminFrame = new adminUtilisateur();
+                        AdminUtilisateur adminFrame = new AdminUtilisateur();
                         adminFrame.setVisible(true);
 
                         // Fermer la fenêtre de connexion
