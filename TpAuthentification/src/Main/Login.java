@@ -6,6 +6,7 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JPasswordField;
 import javax.swing.JOptionPane;
@@ -136,53 +137,61 @@ public class Login extends JFrame {
 		panneauContenu.add(btnMotDePasseOublie);
 
 		btnMotDePasseOublie.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				try {
-					// Saisie de l'email de l'utilisateur
-					String email = JOptionPane.showInputDialog(null, "Entrez votre adresse email :",
-							"Mot de Passe Oublié", JOptionPane.QUESTION_MESSAGE);
+		    public void actionPerformed(ActionEvent e) {
+		        try {
+		            // Saisie de l'email de l'utilisateur
+		            String email = JOptionPane.showInputDialog(null, "Entrez votre adresse email :",
+		                    "Mot de Passe Oublié", JOptionPane.QUESTION_MESSAGE);
 
-					if (email == null || email.trim().isEmpty()) {
-						throw new IllegalArgumentException("Veuillez entrer une adresse email.");
-					}
-					if (!validerEmail(email)) {
-						throw new IllegalArgumentException("Adresse email invalide.");
-					}
-					if (!emailExistant(email)) {
-						throw new IllegalArgumentException("Cette adresse email n'existe pas.");
-					}
+		            if (email == null || email.trim().isEmpty()) {
+		                throw new IllegalArgumentException("Veuillez entrer une adresse email.");
+		            }
 
-					// Création d'un champ JPasswordField pour la saisie sécurisée du mot de passe
-					JPasswordField champNouveauMotDePasse = new JPasswordField();
-					int option = JOptionPane.showConfirmDialog(null, champNouveauMotDePasse,
-							"Entrez un nouveau mot de passe", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+		            // Création des champs pour saisir et confirmer le nouveau mot de passe
+		            JPasswordField champNouveauMotDePasse = new JPasswordField();
+		            JPasswordField champConfirmerMotDePasse = new JPasswordField();
 
-					if (option == JOptionPane.OK_OPTION) {
-						// Récupération du mot de passe masqué
-						String nouveauMotDePasse = new String(champNouveauMotDePasse.getPassword()).trim();
-						if (nouveauMotDePasse.isEmpty()) {
-							throw new IllegalArgumentException("Le mot de passe ne peut pas être vide.");
-						}
+		            JPanel panel = new JPanel();
+		            panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+		            panel.add(new JLabel("Nouveau mot de passe :"));
+		            panel.add(champNouveauMotDePasse);
+		            panel.add(new JLabel("Confirmer le mot de passe :"));
+		            panel.add(champConfirmerMotDePasse);
 
-						// Hacher le mot de passe et le mettre à jour dans la base de données
-						String motDePasseHache = hacherMotDePasse(nouveauMotDePasse);
-						mettreAJourMotDePasse(email, motDePasseHache);
-						JOptionPane.showMessageDialog(null, "Votre mot de passe a été mis à jour.", "Succès",
-								JOptionPane.INFORMATION_MESSAGE);
-					} else {
-						JOptionPane.showMessageDialog(null, "Opération annulée.", "Annulation",
-								JOptionPane.INFORMATION_MESSAGE);
-					}
+		            int option = JOptionPane.showConfirmDialog(null, panel,
+		                    "Entrez un nouveau mot de passe", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
-				} catch (IllegalArgumentException ex) {
-					JOptionPane.showMessageDialog(null, ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
-				} catch (Exception ex) {
-					JOptionPane.showMessageDialog(null, "Erreur : " + ex.getMessage(), "Erreur",
-							JOptionPane.ERROR_MESSAGE);
-					ex.printStackTrace();
-				}
-			}
+		            if (option == JOptionPane.OK_OPTION) {
+		                // Récupération des mots de passe saisis
+		                String nouveauMotDePasse = new String(champNouveauMotDePasse.getPassword()).trim();
+		                String confirmerMotDePasse = new String(champConfirmerMotDePasse.getPassword()).trim();
+
+		                // Vérification simple : les mots de passe doivent être identiques
+		                if (!nouveauMotDePasse.equals(confirmerMotDePasse)) {
+		                    throw new IllegalArgumentException("Les mots de passe ne correspondent pas.");
+		                }
+
+		                // Mettre à jour le mot de passe dans la base de données
+		                String motDePasseHache = hacherMotDePasse(nouveauMotDePasse);
+		                mettreAJourMotDePasse(email, motDePasseHache);
+
+		                JOptionPane.showMessageDialog(null, "Votre mot de passe a été mis à jour.", 
+		                        "Succès", JOptionPane.INFORMATION_MESSAGE);
+		            } else {
+		                JOptionPane.showMessageDialog(null, "Opération annulée.", "Annulation",
+		                        JOptionPane.INFORMATION_MESSAGE);
+		            }
+
+		        } catch (IllegalArgumentException ex) {
+		            JOptionPane.showMessageDialog(null, ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+		        } catch (Exception ex) {
+		            JOptionPane.showMessageDialog(null, "Erreur : " + ex.getMessage(), "Erreur",
+		                    JOptionPane.ERROR_MESSAGE);
+		            ex.printStackTrace();
+		        }
+		    }
 		});
+
 
 		// Bouton pour ouvrir la page d'inscription
 		JButton btnInscription = new JButton("S'inscrire");
